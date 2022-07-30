@@ -6,6 +6,11 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import '../node_modules/bootstrap/dist/css/bootstrap.css'; //add bootstrap to our app
 
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+
+library.add(faStar); //the font stars used for rating
+
 // This was React 18 as the the time of development, had some issues so change to React 17 below
 // const root = ReactDOM.createRoot(
 //   document.getElementById('root') as HTMLElement

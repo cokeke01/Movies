@@ -1,4 +1,10 @@
-import { MapContainer, TileLayer, useMapEvent, Marker } from 'react-leaflet';
+import {
+  MapContainer,
+  TileLayer,
+  useMapEvent,
+  Marker,
+  Popup,
+} from 'react-leaflet';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -28,14 +34,19 @@ export default function Map(props: mapProps) {
         attribution='React Movies'
         url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
       />
-      <MapClick
-        setCoordinates={(coordinates) => {
-          setCoordinates([coordinates]);
-          props.handleMapClick(coordinates);
-        }}
-      />
+      {props.readOnly ? null : (
+        <MapClick
+          setCoordinates={(coordinates) => {
+            setCoordinates([coordinates]);
+            props.handleMapClick(coordinates);
+          }}
+        />
+      )}
+
       {coordinates.map((coordinate, index) => (
-        <Marker key={index} position={[coordinate.lat, coordinate.lng]} />
+        <Marker key={index} position={[coordinate.lat, coordinate.lng]}>
+          {coordinate.name ? <Popup>{coordinate.name}</Popup> : null}
+        </Marker>
       ))}
     </MapContainer>
   );
@@ -45,10 +56,13 @@ interface mapProps {
   height: string;
   coordinates: coordinateDTO[];
   handleMapClick(coordinates: coordinateDTO): void;
+  readOnly: boolean;
 }
 
 Map.defaultProps = {
   height: '500px',
+  handleMapClick: () => {},
+  readOnly: false,
 };
 
 function MapClick(props: mapClickProps) {
@@ -64,7 +78,3 @@ function MapClick(props: mapClickProps) {
 interface mapClickProps {
   setCoordinates(coordinates: coordinateDTO): void;
 }
-
-// leafledjs allows us to use Map in our javascript applications
-// -> npm install --save-exact leaflet@1.7.1 react-leaflet@3.1.0 @react-leaflet/core@1.0.2
-// -> npm i -D @types/leaflet

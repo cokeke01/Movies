@@ -1,42 +1,31 @@
+import axios, { AxiosResponse } from 'axios';
 import { ReactElement, useState } from 'react';
-import { Typeahead } from 'react-bootstrap-typeahead';
+import { AsyncTypeahead } from 'react-bootstrap-typeahead';
 import { actorMovieDTO } from '../actors/actors.model';
+import { urlActors } from '../endpoints';
 
 export default function TypeAheadActors(props: typeAheadActorsProps) {
-  const actors: actorMovieDTO[] = [
-    {
-      //so actors contains an array of actorMovieDTO
-      id: 1,
-      name: 'Felipe',
-      character: '',
-      picture:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Tom_Holland_by_Gage_Skidmore.jpg/220px-Tom_Holland_by_Gage_Skidmore.jpg',
-    },
-    {
-      id: 2,
-      name: 'Fernando',
-      character: '',
-      picture:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Dwayne_Johnson_2%2C_2013.jpg/220px-Dwayne_Johnson_2%2C_2013.jpg',
-    },
-    {
-      id: 3,
-      name: 'Jessica',
-      character: '',
-      picture:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Meryl_Streep_December_2018.jpg/220px-Meryl_Streep_December_2018.jpg',
-    },
-  ];
+  const [actors, setActors] = useState<actorMovieDTO[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const selected: actorMovieDTO[] = []; //so we are declaring that by default no actor have been selected
+  const selected: actorMovieDTO[] = [];
 
-  //declaration for handling drag or selected actors from the typeahead menu component
   const [draggedElement, setDraggedElement] = useState<
     actorMovieDTO | undefined
   >(undefined);
 
+  function handleSearch(query: string) {
+    setIsLoading(true);
+    axios
+      .get(`${urlActors}/searchByName/${query}`)
+      .then((response: AxiosResponse<actorMovieDTO[]>) => {
+        setActors(response.data);
+        setIsLoading(false);
+      });
+  }
+
   function handleDragStart(actor: actorMovieDTO) {
-    setDraggedElement(actor); //identifying the selected (actor) to drag
+    setDraggedElement(actor);
   }
 
   function handleDragOver(actor: actorMovieDTO) {
@@ -46,7 +35,6 @@ export default function TypeAheadActors(props: typeAheadActorsProps) {
 
     if (actor.id !== draggedElement.id) {
       const draggedElementIndex = props.actors.findIndex(
-        //we are capturing the index of the drag actor as well as the changes in other actors to identify their new index value
         (x) => x.id === draggedElement.id
       );
       const actorIndex = props.actors.findIndex((x) => x.id === actor.id);
@@ -61,21 +49,22 @@ export default function TypeAheadActors(props: typeAheadActorsProps) {
   return (
     <div className='mb-3'>
       <label>{props.displayName}</label>
-      <Typeahead
+      <AsyncTypeahead
         id='typeahead'
         onChange={(actors) => {
           if (props.actors.findIndex((x) => x.id === actors[0].id) === -1) {
+            actors[0].character = '';
             props.onAdd([...props.actors, actors[0]]);
           }
-
-          console.log(actors);
         }}
         options={actors}
         labelKey={(actor) => actor.name}
-        filterBy={['name']}
+        filterBy={() => true}
+        isLoading={isLoading}
+        onSearch={handleSearch}
         placeholder='Write the name of the actor...'
         minLength={1}
-        flip={true} //to make the list of actors display from the top and not down
+        flip={true}
         selected={selected}
         renderMenuItemChildren={(actor) => (
           <>
@@ -120,7 +109,7 @@ export default function TypeAheadActors(props: typeAheadActorsProps) {
 interface typeAheadActorsProps {
   displayName: string;
   actors: actorMovieDTO[];
-  onAdd(actors: actorMovieDTO[]): void; //an array to track the selected actors
-  onRemove(actor: actorMovieDTO): void; //to remove the selected actors from array
+  onAdd(actors: actorMovieDTO[]): void;
+  onRemove(actor: actorMovieDTO): void;
   listUI(actor: actorMovieDTO): ReactElement;
 }
